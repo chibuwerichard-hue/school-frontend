@@ -1,109 +1,363 @@
-﻿import axios from "axios";
+﻿// API Service - Updated with all data endpoints
+const API_URL = import.meta.env.VITE_API_URL || 'https://admin-system-backend-1.onrender.com';
 
-console.log("API Config: baseURL = http://localhost:8080");
+// Get auth token from localStorage
+const getAuthToken = () => {
+  return localStorage.getItem('token');
+};
 
-const api = axios.create({
-  baseURL: "http://localhost:8080",
-  headers: { "Content-Type": "application/json" },
-  withCredentials: false,
-});
+// API call with auth headers
+const apiCall = async (endpoint, method = 'GET', body = null) => {
+  const headers = {
+    'Content-Type': 'application/json',
+  };
 
-api.interceptors.request.use((config) => {
-  console.log("Request to:", config.baseURL + config.url);
-  const token = localStorage.getItem("token");
+  const token = getAuthToken();
   if (token) {
-    config.headers.Authorization = "Bearer " + token;
+    headers['Authorization'] = `Bearer ${token}`;
   }
-  return config;
-});
 
-api.interceptors.response.use(
-  (response) => {
-    console.log("Response:", response);
-    return response;
-  },
-  (error) => {
-    console.error("API Error:", error);
-    return Promise.reject(error);
+  const config = {
+    method,
+    headers,
+  };
+
+  if (body) {
+    config.body = JSON.stringify(body);
   }
-);
 
-export const authAPI = {
-  login: (email, password) => {
-    console.log("Calling login API with:", { email, password });
-    return api.post("/api/auth/login", { email, password });
-  },
+  try {
+    const response = await fetch(`${API_URL}${endpoint}`, config);
+    
+    if (response.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+      return null;
+    }
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call failed:', error);
+    throw error;
+  }
 };
 
-export const studentAPI = {
-  getAll: () => api.get("/api/students/all"),
-  getById: (id) => api.get("/api/students/" + id),
-  create: (student) => api.post("/api/students/create", student),
-  update: (id, student) => api.put("/api/students/update/" + id, student),
-  delete: (id) => api.delete("/api/students/" + id),
-  getByStatus: (status) => api.get("/api/students/status/" + status),
-  getByGrade: (grade) => api.get("/api/students/grade/" + grade),
+// ========== STUDENTS ==========
+export const getStudents = async () => {
+  try {
+    return await apiCall('/api/students');
+  } catch (error) {
+    console.error('Error fetching students:', error);
+    return [];
+  }
 };
 
-export const teacherAPI = {
-  getAll: () => api.get("/api/teachers/all"),
-  getById: (id) => api.get("/api/teachers/" + id),
-  create: (teacher) => api.post("/api/teachers/create", teacher),
-  update: (id, teacher) => api.put("/api/teachers/update/" + id, teacher),
-  getBySubject: (subject) => api.get("/api/teachers/subject/" + subject),
+export const getStudent = async (id) => {
+  try {
+    return await apiCall(`/api/students/${id}`);
+  } catch (error) {
+    console.error('Error fetching student:', error);
+    return null;
+  }
 };
 
-export const resultAPI = {
-  getAll: () => api.get("/api/results"),
-  getById: (id) => api.get("/api/results/" + id),
-  create: (result) => api.post("/api/results/create", result),
-  update: (id, result) => api.put("/api/results/update/" + id, result),
-  getByStudent: (id) => api.get("/api/results/student/" + id),
-  getByYear: (year) => api.get("/api/results/year/" + year),
+export const createStudent = async (studentData) => {
+  try {
+    return await apiCall('/api/students', 'POST', studentData);
+  } catch (error) {
+    console.error('Error creating student:', error);
+    throw error;
+  }
 };
 
-export const attendanceAPI = {
-  getAll: () => api.get("/api/attendance"),
-  getById: (id) => api.get("/api/attendance/" + id),
-  create: (attendance) => api.post("/api/attendance/create", attendance),
-  update: (id, attendance) => api.put("/api/attendance/update/" + id, attendance),
-  getByStudent: (id) => api.get("/api/attendance/student/" + id),
-  getByDateRange: (start, end) => 
-    api.get(`/api/attendance/range?start=${start}&end=${end}`),
+export const updateStudent = async (id, studentData) => {
+  try {
+    return await apiCall(`/api/students/${id}`, 'PUT', studentData);
+  } catch (error) {
+    console.error('Error updating student:', error);
+    throw error;
+  }
 };
 
-export const sportsAPI = {
-  getAll: () => api.get("/api/sports"),
-  getById: (id) => api.get("/api/sports/" + id),
-  create: (sport) => api.post("/api/sports/create", sport),
-  update: (id, sport) => api.put("/api/sports/update/" + id, sport),
-  delete: (id) => api.delete("/api/sports/" + id),
-  getByStudent: (id) => api.get("/api/sports/student/" + id),
-  getByName: (name) => api.get("/api/sports/sport/" + name),
+export const deleteStudent = async (id) => {
+  try {
+    return await apiCall(`/api/students/${id}`, 'DELETE');
+  } catch (error) {
+    console.error('Error deleting student:', error);
+    throw error;
+  }
 };
 
-export const feeAPI = {
-  getAll: () => api.get("/api/fees"),
-  getById: (id) => api.get("/api/fees/" + id),
-  create: (fee) => api.post("/api/fees/create", fee),
-  update: (id, fee) => api.put("/api/fees/update/" + id, fee),
-  getByStudent: (id) => api.get("/api/fees/student/" + id),
-  getByStatus: (status) => api.get("/api/fees/status/" + status),
+// ========== TEACHERS ==========
+export const getTeachers = async () => {
+  try {
+    return await apiCall('/api/teachers');
+  } catch (error) {
+    console.error('Error fetching teachers:', error);
+    return [];
+  }
 };
 
-export const paymentAPI = {
-  getAll: () => api.get("/api/payments"),
-  getById: (id) => api.get("/api/payments/" + id),
-  create: (payment) => api.post("/api/payments/create", payment),
-  update: (id, payment) => api.put("/api/payments/update/" + id, payment),
-  getByStudent: (id) => api.get("/api/payments/student/" + id),
-  getByReceipt: (receipt) => api.get("/api/payments/receipt/" + receipt),
+export const getTeacher = async (id) => {
+  try {
+    return await apiCall(`/api/teachers/${id}`);
+  } catch (error) {
+    console.error('Error fetching teacher:', error);
+    return null;
+  }
 };
 
-export const userAPI = {
-  getById: (id) => api.get("/api/users/" + id),
-  getByEmail: (email) => api.get("/api/users/email/" + email),
-  create: (user) => api.post("/api/users/create", user),
+export const createTeacher = async (teacherData) => {
+  try {
+    return await apiCall('/api/teachers', 'POST', teacherData);
+  } catch (error) {
+    console.error('Error creating teacher:', error);
+    throw error;
+  }
 };
 
-export default api;
+export const updateTeacher = async (id, teacherData) => {
+  try {
+    return await apiCall(`/api/teachers/${id}`, 'PUT', teacherData);
+  } catch (error) {
+    console.error('Error updating teacher:', error);
+    throw error;
+  }
+};
+
+export const deleteTeacher = async (id) => {
+  try {
+    return await apiCall(`/api/teachers/${id}`, 'DELETE');
+  } catch (error) {
+    console.error('Error deleting teacher:', error);
+    throw error;
+  }
+};
+
+// ========== ATTENDANCE ==========
+export const getAttendance = async () => {
+  try {
+    return await apiCall('/api/attendance');
+  } catch (error) {
+    console.error('Error fetching attendance:', error);
+    return [];
+  }
+};
+
+export const getAttendanceByDate = async (date) => {
+  try {
+    return await apiCall(`/api/attendance?date=${date}`);
+  } catch (error) {
+    console.error('Error fetching attendance by date:', error);
+    return [];
+  }
+};
+
+export const recordAttendance = async (attendanceData) => {
+  try {
+    return await apiCall('/api/attendance', 'POST', attendanceData);
+  } catch (error) {
+    console.error('Error recording attendance:', error);
+    throw error;
+  }
+};
+
+// ========== FINANCE / PAYMENTS ==========
+export const getPayments = async () => {
+  try {
+    return await apiCall('/api/payments');
+  } catch (error) {
+    console.error('Error fetching payments:', error);
+    return [];
+  }
+};
+
+export const getPaymentById = async (id) => {
+  try {
+    return await apiCall(`/api/payments/${id}`);
+  } catch (error) {
+    console.error('Error fetching payment:', error);
+    return null;
+  }
+};
+
+export const createPayment = async (paymentData) => {
+  try {
+    return await apiCall('/api/payments', 'POST', paymentData);
+  } catch (error) {
+    console.error('Error creating payment:', error);
+    throw error;
+  }
+};
+
+export const getExpenses = async () => {
+  try {
+    return await apiCall('/api/expenses');
+  } catch (error) {
+    console.error('Error fetching expenses:', error);
+    return [];
+  }
+};
+
+export const createExpense = async (expenseData) => {
+  try {
+    return await apiCall('/api/expenses', 'POST', expenseData);
+  } catch (error) {
+    console.error('Error creating expense:', error);
+    throw error;
+  }
+};
+
+export const getFinanceReport = async () => {
+  try {
+    return await apiCall('/api/finance/report');
+  } catch (error) {
+    console.error('Error fetching finance report:', error);
+    return null;
+  }
+};
+
+// ========== SPORTS ==========
+export const getSportsParticipants = async () => {
+  try {
+    return await apiCall('/api/sports/participants');
+  } catch (error) {
+    console.error('Error fetching sports participants:', error);
+    return [];
+  }
+};
+
+export const getSportsCompetitions = async () => {
+  try {
+    return await apiCall('/api/sports/competitions');
+  } catch (error) {
+    console.error('Error fetching competitions:', error);
+    return [];
+  }
+};
+
+export const createCompetition = async (competitionData) => {
+  try {
+    return await apiCall('/api/sports/competitions', 'POST', competitionData);
+  } catch (error) {
+    console.error('Error creating competition:', error);
+    throw error;
+  }
+};
+
+export const getSportsStats = async () => {
+  try {
+    return await apiCall('/api/sports/stats');
+  } catch (error) {
+    console.error('Error fetching sports stats:', error);
+    return null;
+  }
+};
+
+// ========== ASSETS ==========
+export const getAssets = async () => {
+  try {
+    return await apiCall('/api/assets');
+  } catch (error) {
+    console.error('Error fetching assets:', error);
+    return [];
+  }
+};
+
+export const createAsset = async (assetData) => {
+  try {
+    return await apiCall('/api/assets', 'POST', assetData);
+  } catch (error) {
+    console.error('Error creating asset:', error);
+    throw error;
+  }
+};
+
+export const updateAsset = async (id, assetData) => {
+  try {
+    return await apiCall(`/api/assets/${id}`, 'PUT', assetData);
+  } catch (error) {
+    console.error('Error updating asset:', error);
+    throw error;
+  }
+};
+
+// ========== AUTHENTICATION ==========
+export const login = async (email, password) => {
+  try {
+    const response = await fetch(`${API_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Login failed');
+    }
+
+    const data = await response.json();
+    if (data.token) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+    }
+    return data;
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error;
+  }
+};
+
+export const logout = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+};
+
+export const getCurrentUser = () => {
+  const user = localStorage.getItem('user');
+  return user ? JSON.parse(user) : null;
+};
+
+export default {
+  // Students
+  getStudents,
+  getStudent,
+  createStudent,
+  updateStudent,
+  deleteStudent,
+  // Teachers
+  getTeachers,
+  getTeacher,
+  createTeacher,
+  updateTeacher,
+  deleteTeacher,
+  // Attendance
+  getAttendance,
+  getAttendanceByDate,
+  recordAttendance,
+  // Finance
+  getPayments,
+  getPaymentById,
+  createPayment,
+  getExpenses,
+  createExpense,
+  getFinanceReport,
+  // Sports
+  getSportsParticipants,
+  getSportsCompetitions,
+  createCompetition,
+  getSportsStats,
+  // Assets
+  getAssets,
+  createAsset,
+  updateAsset,
+  // Auth
+  login,
+  logout,
+  getCurrentUser,
+};
