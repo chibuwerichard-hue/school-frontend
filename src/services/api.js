@@ -1,4 +1,4 @@
-﻿// API Service - Updated with all data endpoints
+﻿// API Service - Updated with all endpoints
 const API_URL = import.meta.env.VITE_API_URL || 'https://admin-system-backend-1.onrender.com';
 
 // Get auth token from localStorage
@@ -46,7 +46,7 @@ const apiCall = async (endpoint, method = 'GET', body = null) => {
   }
 };
 
-// ========== STUDENTS ==========
+// STUDENTS
 export const getStudents = async () => {
   try {
     return await apiCall('/api/students');
@@ -92,7 +92,7 @@ export const deleteStudent = async (id) => {
   }
 };
 
-// ========== TEACHERS ==========
+// TEACHERS
 export const getTeachers = async () => {
   try {
     return await apiCall('/api/teachers');
@@ -138,7 +138,7 @@ export const deleteTeacher = async (id) => {
   }
 };
 
-// ========== ATTENDANCE ==========
+// ATTENDANCE
 export const getAttendance = async () => {
   try {
     return await apiCall('/api/attendance');
@@ -166,7 +166,7 @@ export const recordAttendance = async (attendanceData) => {
   }
 };
 
-// ========== FINANCE / PAYMENTS ==========
+// PAYMENTS
 export const getPayments = async () => {
   try {
     return await apiCall('/api/payments');
@@ -194,6 +194,7 @@ export const createPayment = async (paymentData) => {
   }
 };
 
+// EXPENSES
 export const getExpenses = async () => {
   try {
     return await apiCall('/api/expenses');
@@ -221,7 +222,7 @@ export const getFinanceReport = async () => {
   }
 };
 
-// ========== SPORTS ==========
+// SPORTS
 export const getSportsParticipants = async () => {
   try {
     return await apiCall('/api/sports/participants');
@@ -258,7 +259,7 @@ export const getSportsStats = async () => {
   }
 };
 
-// ========== ASSETS ==========
+// ASSETS
 export const getAssets = async () => {
   try {
     return await apiCall('/api/assets');
@@ -286,7 +287,7 @@ export const updateAsset = async (id, assetData) => {
   }
 };
 
-// ========== AUTHENTICATION ==========
+// AUTHENTICATION
 export const login = async (email, password) => {
   try {
     const response = await fetch(`${API_URL}/api/auth/login`, {
@@ -323,41 +324,38 @@ export const getCurrentUser = () => {
   return user ? JSON.parse(user) : null;
 };
 
-export default {
-  // Students
+// NAMED EXPORT FOR COMPATIBILITY
+export const api = {
   getStudents,
   getStudent,
   createStudent,
   updateStudent,
   deleteStudent,
-  // Teachers
   getTeachers,
   getTeacher,
   createTeacher,
   updateTeacher,
   deleteTeacher,
-  // Attendance
   getAttendance,
   getAttendanceByDate,
   recordAttendance,
-  // Finance
   getPayments,
   getPaymentById,
   createPayment,
   getExpenses,
   createExpense,
   getFinanceReport,
-  // Sports
   getSportsParticipants,
   getSportsCompetitions,
   createCompetition,
   getSportsStats,
-  // Assets
   getAssets,
   createAsset,
   updateAsset,
-  // Auth
   login,
   logout,
   getCurrentUser,
 };
+
+// DEFAULT EXPORT
+export default api;
