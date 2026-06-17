@@ -1,230 +1,209 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 export default function SportsDashboard() {
-  const [participants, setParticipants] = useState([
-    { id: 1, name: "John Doe", sport: "Football", level: "Senior", status: "Active" },
-    { id: 2, name: "Jane Smith", sport: "Netball", level: "Junior", status: "Active" },
-    { id: 3, name: "Mike Johnson", sport: "Athletics", level: "Senior", status: "Active" }
-  ]);
-  const [competitions, setCompetitions] = useState([
-    { id: 1, event: "Football Match", date: "2026-06-15", opponent: "District Team", result: "Won 3-1", level: "District" },
-    { id: 2, event: "Athletics", date: "2026-06-10", opponent: "Regional", result: "Won 5 medals", level: "Zonal" }
-  ]);
-  const [showParticipantForm, setShowParticipantForm] = useState(false);
-  const [participantForm, setParticipantForm] = useState({
-    name: "",
-    sport: "Football",
-    level: "Senior"
-  });
+  const navigate = useNavigate();
+  const [participants, setParticipants] = useState([]);
+  const [competitions, setCompetitions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("participants");
 
-  const handleAddParticipant = (e) => {
-    e.preventDefault();
-    const newParticipant = {
-      id: participants.length + 1,
-      name: participantForm.name,
-      sport: participantForm.sport,
-      level: participantForm.level,
-      status: "Active"
-    };
-    setParticipants([...participants, newParticipant]);
-    setParticipantForm({ name: "", sport: "Football", level: "Senior" });
-    setShowParticipantForm(false);
-    alert("✅ Participant added!");
+  useEffect(() => {
+    const user = localStorage.getItem("role");
+    if (user !== "SPORTS_COORDINATOR") {
+      navigate("/login");
+    }
+    loadData();
+  }, [navigate]);
+
+  const loadData = async () => {
+    try {
+      const participantsData = await api.getSportsParticipants();
+      const competitionsData = await api.getSportsCompetitions();
+      setParticipants(participantsData || []);
+      setCompetitions(competitionsData || []);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error loading data:", error);
+      setLoading(false);
+    }
   };
 
-  const sportStats = {
-    Football: 45,
-    Netball: 32,
-    Athletics: 67,
-    Basketball: 28
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/login");
   };
 
   return (
-    <div style={{ padding: "40px" }}>
-      <h1 style={{ color: "#333", marginTop: "0" }}>⚽ Sports Coordinator Dashboard</h1>
-
-      {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px", marginBottom: "40px" }}>
-        {[
-          { title: "Total Participants", value: participants.length, icon: "👥", color: "#1a73e8" },
-          { title: "Sports", value: Object.keys(sportStats).length, icon: "⚽", color: "#34a853" },
-          { title: "Competitions", value: competitions.length, icon: "🏆", color: "#fbbc04" },
-          { title: "Win Rate", value: "80%", icon: "🎯", color: "#7c3aed" }
-        ].map((card, idx) => (
-          <div key={idx} style={{
-            backgroundColor: "white",
-            padding: "20px",
-            borderRadius: "8px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center"
-          }}>
-            <div>
-              <p style={{ margin: "0 0 8px 0", color: "#999", fontSize: "12px" }}>{card.title}</p>
-              <h3 style={{ margin: "0", color: card.color, fontSize: "24px", fontWeight: "bold" }}>{card.value}</h3>
-            </div>
-            <div style={{ fontSize: "30px" }}>{card.icon}</div>
-          </div>
-        ))}
+    <div style={{ padding: "20px", backgroundColor: "#f9fafb", minHeight: "100vh" }}>
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "30px",
+        padding: "20px",
+        backgroundColor: "white",
+        borderRadius: "8px",
+        boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+      }}>
+        <h1 style={{ margin: 0 }}>Sports Coordinator Dashboard</h1>
+        <div>
+          <span style={{ marginRight: "20px" }}>Welcome, {localStorage.getItem("email")} (SPORTS COORDINATOR)</span>
+          <button
+            onClick={handleLogout}
+            style={{
+              padding: "8px 16px",
+              backgroundColor: "#ef4444",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer"
+            }}
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
-      {/* Add Participant Button */}
-      <button
-        onClick={() => setShowParticipantForm(!showParticipantForm)}
-        style={{
-          padding: "10px 20px",
-          backgroundColor: "#7c3aed",
-          color: "white",
-          border: "none",
-          borderRadius: "6px",
-          cursor: "pointer",
-          marginBottom: "20px",
-          fontWeight: "bold"
-        }}
-      >
-        {showParticipantForm ? "❌ Cancel" : "➕ Add Participant"}
-      </button>
-
-      {/* Participant Form */}
-      {showParticipantForm && (
+      {/* Stats Cards */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+        gap: "20px",
+        marginBottom: "30px"
+      }}>
         <div style={{
-          backgroundColor: "white",
           padding: "20px",
+          backgroundColor: "white",
           borderRadius: "8px",
-          marginBottom: "20px",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
         }}>
-          <form onSubmit={handleAddParticipant}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "15px" }}>
-              <input
-                type="text"
-                placeholder="Student Name"
-                value={participantForm.name}
-                onChange={(e) => setParticipantForm({ ...participantForm, name: e.target.value })}
-                style={{ padding: "10px", border: "1px solid #ddd", borderRadius: "6px", fontSize: "13px", gridColumn: "1 / -1" }}
-                required
-              />
-              <select
-                value={participantForm.sport}
-                onChange={(e) => setParticipantForm({ ...participantForm, sport: e.target.value })}
-                style={{ padding: "10px", border: "1px solid #ddd", borderRadius: "6px", fontSize: "13px" }}
-              >
-                <option value="Football">⚽ Football</option>
-                <option value="Netball">🏀 Netball</option>
-                <option value="Basketball">🏀 Basketball</option>
-                <option value="Athletics">🏃 Athletics</option>
-              </select>
-              <select
-                value={participantForm.level}
-                onChange={(e) => setParticipantForm({ ...participantForm, level: e.target.value })}
-                style={{ padding: "10px", border: "1px solid #ddd", borderRadius: "6px", fontSize: "13px" }}
-              >
-                <option value="Junior">Junior</option>
-                <option value="Senior">Senior</option>
-              </select>
-              <button type="submit" style={{
-                gridColumn: "1 / -1",
-                padding: "10px",
-                backgroundColor: "#7c3aed",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontWeight: "bold"
-              }}>
-                💾 Add Participant
-              </button>
-            </div>
-          </form>
+          <h3 style={{ margin: "0 0 10px 0", color: "#6b7280" }}>Total Participants</h3>
+          <p style={{ fontSize: "32px", fontWeight: "bold", color: "#1e3a8a", margin: 0 }}>
+            {participants.length}
+          </p>
+        </div>
+
+        <div style={{
+          padding: "20px",
+          backgroundColor: "white",
+          borderRadius: "8px",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+        }}>
+          <h3 style={{ margin: "0 0 10px 0", color: "#6b7280" }}>Total Competitions</h3>
+          <p style={{ fontSize: "32px", fontWeight: "bold", color: "#059669", margin: 0 }}>
+            {competitions.length}
+          </p>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ marginBottom: "20px" }}>
+        <button
+          onClick={() => setActiveTab("participants")}
+          style={{
+            padding: "10px 20px",
+            backgroundColor: activeTab === "participants" ? "#1e3a8a" : "#e5e7eb",
+            color: activeTab === "participants" ? "white" : "black",
+            border: "none",
+            borderRadius: "4px 4px 0 0",
+            cursor: "pointer",
+            marginRight: "10px"
+          }}
+        >
+          Participants ({participants.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("competitions")}
+          style={{
+            padding: "10px 20px",
+            backgroundColor: activeTab === "competitions" ? "#1e3a8a" : "#e5e7eb",
+            color: activeTab === "competitions" ? "white" : "black",
+            border: "none",
+            borderRadius: "4px 4px 0 0",
+            cursor: "pointer"
+          }}
+        >
+          Competitions ({competitions.length})
+        </button>
+      </div>
+
+      {/* Participants Table */}
+      {activeTab === "participants" && (
+        <div style={{
+          padding: "20px",
+          backgroundColor: "white",
+          borderRadius: "8px",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+        }}>
+          <h2 style={{ marginTop: 0 }}>⚽ Participants</h2>
+          {loading ? (
+            <p>Loading...</p>
+          ) : participants.length === 0 ? (
+            <p style={{ color: "#6b7280" }}>No participants registered yet.</p>
+          ) : (
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ backgroundColor: "#f3f4f6" }}>
+                  <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>ID</th>
+                  <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>Name</th>
+                  <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>Sport</th>
+                  <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>Grade</th>
+                </tr>
+              </thead>
+              <tbody>
+                {participants.map((participant) => (
+                  <tr key={participant.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
+                    <td style={{ padding: "12px" }}>{participant.id || "-"}</td>
+                    <td style={{ padding: "12px" }}>{participant.name || "-"}</td>
+                    <td style={{ padding: "12px" }}>{participant.sport || "-"}</td>
+                    <td style={{ padding: "12px" }}>{participant.grade || "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
 
-      {/* Participants & Competitions */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
-        {/* Participants */}
+      {/* Competitions Table */}
+      {activeTab === "competitions" && (
         <div style={{
+          padding: "20px",
           backgroundColor: "white",
           borderRadius: "8px",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-          overflow: "hidden"
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
         }}>
-          <div style={{ padding: "15px", borderBottom: "1px solid #eee", backgroundColor: "#f9f9f9" }}>
-            <h3 style={{ margin: "0", color: "#333", fontSize: "15px" }}>👥 Sports Participants</h3>
-          </div>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
-            <thead>
-              <tr style={{ backgroundColor: "#f9f9f9" }}>
-                <th style={{ padding: "10px", textAlign: "left", fontWeight: "600" }}>Name</th>
-                <th style={{ padding: "10px", textAlign: "left", fontWeight: "600" }}>Sport</th>
-                <th style={{ padding: "10px", textAlign: "left", fontWeight: "600" }}>Level</th>
-              </tr>
-            </thead>
-            <tbody>
-              {participants.map((p) => (
-                <tr key={p.id} style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: "10px" }}>{p.name}</td>
-                  <td style={{ padding: "10px" }}>{p.sport}</td>
-                  <td style={{ padding: "10px" }}>{p.level}</td>
+          <h2 style={{ marginTop: 0 }}>🏆 Competitions</h2>
+          {loading ? (
+            <p>Loading...</p>
+          ) : competitions.length === 0 ? (
+            <p style={{ color: "#6b7280" }}>No competitions scheduled yet.</p>
+          ) : (
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ backgroundColor: "#f3f4f6" }}>
+                  <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>ID</th>
+                  <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>Name</th>
+                  <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>Sport</th>
+                  <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>Date</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {competitions.map((competition) => (
+                  <tr key={competition.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
+                    <td style={{ padding: "12px" }}>{competition.id || "-"}</td>
+                    <td style={{ padding: "12px" }}>{competition.name || "-"}</td>
+                    <td style={{ padding: "12px" }}>{competition.sport || "-"}</td>
+                    <td style={{ padding: "12px" }}>{competition.date || "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
-
-        {/* Competitions */}
-        <div style={{
-          backgroundColor: "white",
-          borderRadius: "8px",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-          overflow: "hidden"
-        }}>
-          <div style={{ padding: "15px", borderBottom: "1px solid #eee", backgroundColor: "#f9f9f9" }}>
-            <h3 style={{ margin: "0", color: "#333", fontSize: "15px" }}>🏆 Competition Results</h3>
-          </div>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
-            <thead>
-              <tr style={{ backgroundColor: "#f9f9f9" }}>
-                <th style={{ padding: "10px", textAlign: "left", fontWeight: "600" }}>Event</th>
-                <th style={{ padding: "10px", textAlign: "left", fontWeight: "600" }}>Level</th>
-                <th style={{ padding: "10px", textAlign: "left", fontWeight: "600" }}>Result</th>
-              </tr>
-            </thead>
-            <tbody>
-              {competitions.map((comp) => (
-                <tr key={comp.id} style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: "10px" }}>{comp.event}</td>
-                  <td style={{ padding: "10px" }}>{comp.level}</td>
-                  <td style={{ padding: "10px", color: "#34a853", fontWeight: "bold" }}>{comp.result}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Sports Statistics */}
-      <div style={{ marginTop: "40px" }}>
-        <h2 style={{ color: "#333", marginBottom: "20px" }}>📊 Participation by Sport</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "15px" }}>
-          {Object.entries(sportStats).map(([sport, count], idx) => (
-            <div key={idx} style={{
-              backgroundColor: "white",
-              padding: "20px",
-              borderRadius: "8px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              textAlign: "center"
-            }}>
-              <p style={{ margin: "0 0 10px 0", fontSize: "28px" }}>
-                {sport === "Football" ? "⚽" : sport === "Netball" ? "🏀" : sport === "Athletics" ? "🏃" : "🏀"}
-              </p>
-              <h3 style={{ margin: "0 0 5px 0", color: "#333" }}>{sport}</h3>
-              <p style={{ margin: "0", fontSize: "20px", fontWeight: "bold", color: "#7c3aed" }}>{count}</p>
-              <p style={{ margin: "5px 0 0 0", fontSize: "11px", color: "#999" }}>participants</p>
-            </div>
-          ))}
-        </div>
-      </div>
+      )}
     </div>
   );
 }
