@@ -1,5 +1,5 @@
-﻿// API Service - Updated with all endpoints
-const API_URL = import.meta.env.VITE_API_URL || 'https://admin-system-backend-1.onrender.com';
+﻿// API Service - Hardcoded URL for Vercel
+const API_URL = 'https://admin-system-backend-1.onrender.com';
 
 // Get auth token from localStorage
 const getAuthToken = () => {
