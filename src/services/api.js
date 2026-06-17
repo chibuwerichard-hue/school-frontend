@@ -9,6 +9,7 @@ const getHeaders = () => {
   const token = getAuthToken();
   return {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
     ...(token && { 'Authorization': `Bearer ${token}` })
   };
 };
@@ -19,15 +20,30 @@ export const login = async (email, password) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify({ email, password }),
     });
 
+    // Check if response is OK
     if (!response.ok) {
-      throw new Error('Login failed');
+      const text = await response.text();
+      console.error('Server response:', text);
+      throw new Error(`Login failed: ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json();
+    // Get response as text first to debug
+    const text = await response.text();
+    console.log('Raw response:', text);
+    
+    // Parse JSON
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (parseError) {
+      console.error('Failed to parse JSON:', text);
+      throw new Error('Invalid response format from server');
+    }
     
     if (data.success && data.token) {
       localStorage.setItem('token', data.token);
@@ -38,7 +54,7 @@ export const login = async (email, password) => {
       }));
       return data;
     } else {
-      throw new Error('Invalid response format');
+      throw new Error(data.error || 'Invalid response format');
     }
   } catch (error) {
     console.error('Login error:', error);
@@ -63,7 +79,8 @@ export const getUsers = async () => {
       headers: getHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch users');
-    return await response.json();
+    const text = await response.text();
+    return JSON.parse(text);
   } catch (error) {
     console.error('Error fetching users:', error);
     return [];
@@ -77,7 +94,8 @@ export const getStudents = async () => {
       headers: getHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch students');
-    return await response.json();
+    const text = await response.text();
+    return JSON.parse(text);
   } catch (error) {
     console.error('Error fetching students:', error);
     try {
@@ -96,7 +114,8 @@ export const getTeachers = async () => {
       headers: getHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch teachers');
-    return await response.json();
+    const text = await response.text();
+    return JSON.parse(text);
   } catch (error) {
     console.error('Error fetching teachers:', error);
     try {
@@ -146,7 +165,8 @@ export const createUser = async (userData) => {
       body: JSON.stringify(userData),
     });
     if (!response.ok) throw new Error('Failed to create user');
-    return await response.json();
+    const text = await response.text();
+    return JSON.parse(text);
   } catch (error) {
     console.error('Error creating user:', error);
     throw error;
@@ -160,7 +180,8 @@ export const deleteUser = async (id) => {
       headers: getHeaders(),
     });
     if (!response.ok) throw new Error('Failed to delete user');
-    return await response.json();
+    const text = await response.text();
+    return JSON.parse(text);
   } catch (error) {
     console.error('Error deleting user:', error);
     throw error;
@@ -174,7 +195,8 @@ export const getAttendanceByDate = async (date) => {
       headers: getHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch attendance');
-    return await response.json();
+    const text = await response.text();
+    return JSON.parse(text);
   } catch (error) {
     console.error('Error fetching attendance:', error);
     return { date, message: 'Attendance data not available', data: [] };
@@ -188,7 +210,8 @@ export const getPayments = async () => {
       headers: getHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch payments');
-    return await response.json();
+    const text = await response.text();
+    return JSON.parse(text);
   } catch (error) {
     console.error('Error fetching payments:', error);
     return { message: 'Payments data not available', data: [] };
@@ -202,7 +225,8 @@ export const getExpenses = async () => {
       headers: getHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch expenses');
-    return await response.json();
+    const text = await response.text();
+    return JSON.parse(text);
   } catch (error) {
     console.error('Error fetching expenses:', error);
     return { message: 'Expenses data not available', data: [] };
@@ -216,7 +240,8 @@ export const getSportsParticipants = async () => {
       headers: getHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch participants');
-    return await response.json();
+    const text = await response.text();
+    return JSON.parse(text);
   } catch (error) {
     console.error('Error fetching participants:', error);
     return { message: 'Participants data not available', data: [] };
@@ -230,7 +255,8 @@ export const getSportsCompetitions = async () => {
       headers: getHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch competitions');
-    return await response.json();
+    const text = await response.text();
+    return JSON.parse(text);
   } catch (error) {
     console.error('Error fetching competitions:', error);
     return { message: 'Competitions data not available', data: [] };
@@ -244,7 +270,8 @@ export const getAssets = async () => {
       headers: getHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch assets');
-    return await response.json();
+    const text = await response.text();
+    return JSON.parse(text);
   } catch (error) {
     console.error('Error fetching assets:', error);
     return { message: 'Assets data not available', data: [] };
@@ -254,7 +281,8 @@ export const getAssets = async () => {
 export const healthCheck = async () => {
   try {
     const response = await fetch(`${API_URL}/api/auth/health`);
-    return await response.json();
+    const text = await response.text();
+    return JSON.parse(text);
   } catch (error) {
     console.error('Health check error:', error);
     return { status: 'DOWN', error: error.message };
