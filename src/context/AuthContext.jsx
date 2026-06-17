@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { api } from '../services/api';
+import { login as apiLogin } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -9,33 +9,43 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (token) {
       const userData = localStorage.getItem('user');
       if (userData) {
-        setUser(JSON.parse(userData));
+        try {
+          setUser(JSON.parse(userData));
+        } catch (e) {
+          console.error('Error parsing user data:', e);
+        }
       }
     }
   }, [token]);
 
   const login = async (email, password) => {
     setLoading(true);
+    setError(null);
     try {
-      const response = await api.login(email, password);
-      const data = await response.json();
+      console.log('Attempting login with:', email);
+      const data = await apiLogin(email, password);
+      console.log('Login response:', data);
       
       if (data.success) {
         setToken(data.token);
         setUser({ email: data.email, role: data.role, id: data.id });
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify({ email: data.email, role: data.role, id: data.id }));
-        return { success: true };
+        return { success: true, data };
       } else {
-        return { success: false, error: data.error };
+        const errorMsg = data.error || data.message || 'Login failed';
+        setError(errorMsg);
+        return { success: false, error: errorMsg };
       }
     } catch (error) {
-      return { success: false, error: error.message };
+      console.error('Login error:', error);
+      const errorMsg = error.message || 'An unexpected error occurred';
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
     } finally {
       setLoading(false);
     }
@@ -48,8 +58,17 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
   };
 
+  const value = {
+    user,
+    token,
+    loading,
+    error,
+    login,
+    logout,
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

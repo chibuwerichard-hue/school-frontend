@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Test</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        button { padding: 10px 20px; font-size: 16px; }
+        pre { background: #f0f0f0; padding: 15px; border-radius: 5px; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Backend Connection Test</h1>
+    <button onclick="testLogin()">Test Login</button>
+    <button onclick="testHealth()">Test Health</button>
+    <div id="result">
+        <h3>Result:</h3>
+        <pre id="output">Click a button to test...</pre>
+    </div>
+
+    <script>
+        const API_URL = 'https://admin-system-backend-1.onrender.com';
+
+        async function testLogin() {
+            const output = document.getElementById('output');
+            output.textContent = 'Testing login...';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        email: 'admin@school.com', 
+                        password: 'anything' 
+                    })
+                });
+
+                const text = await response.text();
+                output.textContent = `Response Status: ${response.status}\n\nRaw Response:\n${text}\n\n`;
+                
+                try {
+                    const data = JSON.parse(text);
+                    output.textContent += `Parsed JSON:\n${JSON.stringify(data, null, 2)}`;
+                    if (data.success) {
+                        output.textContent += '\n\n✅ Login successful!';
+                    }
+                } catch(e) {
+                    output.textContent += `\n\n❌ Failed to parse JSON: ${e.message}`;
+                }
+            } catch (error) {
+                output.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function testHealth() {
+            const output = document.getElementById('output');
+            output.textContent = 'Testing health...';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/auth/health`);
+                const text = await response.text();
+                output.textContent = `Health Check Response:\n${text}`;
+                
+                try {
+                    const data = JSON.parse(text);
+                    output.textContent += `\n\n✅ Backend is healthy!\nStatus: ${data.status}`;
+                } catch(e) {
+                    output.textContent += `\n\n❌ Parse error: ${e.message}`;
+                }
+            } catch (error) {
+                output.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
