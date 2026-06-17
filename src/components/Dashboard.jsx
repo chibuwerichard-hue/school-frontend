@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../services/api';
+import api from '../services/api';
 
 function Dashboard() {
   const { user, logout } = useAuth();
@@ -13,8 +13,7 @@ function Dashboard() {
 
   const loadUsers = async () => {
     try {
-      const response = await api.getUsers();
-      const data = await response.json();
+      const data = await api.getUsers();
       setUsers(data);
     } catch (error) {
       console.error('Error loading users:', error);

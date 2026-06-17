@@ -16,6 +16,8 @@ const getHeaders = () => {
 
 export const login = async (email, password) => {
   try {
+    console.log('Attempting login for:', email);
+    
     const response = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: {
@@ -25,26 +27,15 @@ export const login = async (email, password) => {
       body: JSON.stringify({ email, password }),
     });
 
-    // Check if response is OK
     if (!response.ok) {
       const text = await response.text();
       console.error('Server response:', text);
       throw new Error(`Login failed: ${response.status} ${response.statusText}`);
     }
 
-    // Get response as text first to debug
-    const text = await response.text();
-    console.log('Raw response:', text);
-    
-    // Parse JSON
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (parseError) {
-      console.error('Failed to parse JSON:', text);
-      throw new Error('Invalid response format from server');
-    }
-    
+    const data = await response.json();
+    console.log('Login response:', data);
+
     if (data.success && data.token) {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify({
@@ -79,8 +70,7 @@ export const getUsers = async () => {
       headers: getHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch users');
-    const text = await response.text();
-    return JSON.parse(text);
+    return await response.json();
   } catch (error) {
     console.error('Error fetching users:', error);
     return [];
@@ -94,8 +84,7 @@ export const getStudents = async () => {
       headers: getHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch students');
-    const text = await response.text();
-    return JSON.parse(text);
+    return await response.json();
   } catch (error) {
     console.error('Error fetching students:', error);
     try {
@@ -114,8 +103,7 @@ export const getTeachers = async () => {
       headers: getHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch teachers');
-    const text = await response.text();
-    return JSON.parse(text);
+    return await response.json();
   } catch (error) {
     console.error('Error fetching teachers:', error);
     try {
@@ -165,8 +153,7 @@ export const createUser = async (userData) => {
       body: JSON.stringify(userData),
     });
     if (!response.ok) throw new Error('Failed to create user');
-    const text = await response.text();
-    return JSON.parse(text);
+    return await response.json();
   } catch (error) {
     console.error('Error creating user:', error);
     throw error;
@@ -180,8 +167,7 @@ export const deleteUser = async (id) => {
       headers: getHeaders(),
     });
     if (!response.ok) throw new Error('Failed to delete user');
-    const text = await response.text();
-    return JSON.parse(text);
+    return await response.json();
   } catch (error) {
     console.error('Error deleting user:', error);
     throw error;
@@ -195,8 +181,7 @@ export const getAttendanceByDate = async (date) => {
       headers: getHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch attendance');
-    const text = await response.text();
-    return JSON.parse(text);
+    return await response.json();
   } catch (error) {
     console.error('Error fetching attendance:', error);
     return { date, message: 'Attendance data not available', data: [] };
@@ -210,8 +195,7 @@ export const getPayments = async () => {
       headers: getHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch payments');
-    const text = await response.text();
-    return JSON.parse(text);
+    return await response.json();
   } catch (error) {
     console.error('Error fetching payments:', error);
     return { message: 'Payments data not available', data: [] };
@@ -225,8 +209,7 @@ export const getExpenses = async () => {
       headers: getHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch expenses');
-    const text = await response.text();
-    return JSON.parse(text);
+    return await response.json();
   } catch (error) {
     console.error('Error fetching expenses:', error);
     return { message: 'Expenses data not available', data: [] };
@@ -240,8 +223,7 @@ export const getSportsParticipants = async () => {
       headers: getHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch participants');
-    const text = await response.text();
-    return JSON.parse(text);
+    return await response.json();
   } catch (error) {
     console.error('Error fetching participants:', error);
     return { message: 'Participants data not available', data: [] };
@@ -255,8 +237,7 @@ export const getSportsCompetitions = async () => {
       headers: getHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch competitions');
-    const text = await response.text();
-    return JSON.parse(text);
+    return await response.json();
   } catch (error) {
     console.error('Error fetching competitions:', error);
     return { message: 'Competitions data not available', data: [] };
@@ -270,8 +251,7 @@ export const getAssets = async () => {
       headers: getHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch assets');
-    const text = await response.text();
-    return JSON.parse(text);
+    return await response.json();
   } catch (error) {
     console.error('Error fetching assets:', error);
     return { message: 'Assets data not available', data: [] };
@@ -281,14 +261,14 @@ export const getAssets = async () => {
 export const healthCheck = async () => {
   try {
     const response = await fetch(`${API_URL}/api/auth/health`);
-    const text = await response.text();
-    return JSON.parse(text);
+    return await response.json();
   } catch (error) {
     console.error('Health check error:', error);
     return { status: 'DOWN', error: error.message };
   }
 };
 
+// Also export as default for backward compatibility
 const api = {
   login,
   logout,
