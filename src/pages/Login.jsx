@@ -18,12 +18,13 @@ export default function Login() {
       // Call backend API for login
       const data = await api.login(email, password);
       
-      if (data && data.token) {
+      // Backend returns: { success, token, email, role, id, message }
+      if (data && data.success && data.token) {
         // Save to localStorage
         localStorage.setItem("token", data.token);
-        localStorage.setItem("email", email);
-        localStorage.setItem("role", data.user?.role || "ADMIN");
-        localStorage.setItem("name", data.user?.name || "User");
+        localStorage.setItem("email", data.email);
+        localStorage.setItem("role", data.role);
+        localStorage.setItem("id", data.id);
 
         // Route by role
         const roleRoutes = {
@@ -33,7 +34,7 @@ export default function Login() {
           "SPORTS_COORDINATOR": "/sports-dashboard"
         };
         
-        navigate(roleRoutes[data.user?.role] || "/admin-dashboard");
+        navigate(roleRoutes[data.role] || "/admin-dashboard");
       } else {
         setError("❌ Invalid credentials");
       }
