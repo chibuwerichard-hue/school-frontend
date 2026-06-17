@@ -14,7 +14,7 @@ function Login() {
     setLoading(true);
 
     try {
-      console.log('Attempting login with:', email);
+      console.log('Login attempt with:', email);
       const result = await login(email, password);
       console.log('Login result:', result);
       

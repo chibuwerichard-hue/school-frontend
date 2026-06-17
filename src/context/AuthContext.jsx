@@ -30,19 +30,26 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('Attempting login with:', email);
       const data = await apiLogin(email, password);
-      console.log('Login response:', data);
+      console.log('Login response data:', data);
       
-      if (data.success) {
+      if (data && data.success) {
         setToken(data.token);
-        setUser({ email: data.email, role: data.role, id: data.id });
+        const userData = {
+          email: data.email,
+          role: data.role,
+          id: data.id
+        };
+        setUser(userData);
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(userData));
         return { success: true, data };
       } else {
-        const errorMsg = data.error || data.message || 'Login failed';
+        const errorMsg = data?.error || data?.message || 'Login failed';
         setError(errorMsg);
         return { success: false, error: errorMsg };
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login error in context:', error);
       const errorMsg = error.message || 'An unexpected error occurred';
       setError(errorMsg);
       return { success: false, error: errorMsg };
