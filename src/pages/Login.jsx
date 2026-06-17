@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { initializeAccounts, verifyLogin } from "../services/accountService";
+import api from "../services/api";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -9,27 +9,21 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Initialize accounts on component mount
-  useEffect(() => {
-    initializeAccounts();
-  }, []);
-
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     
     try {
-      // Verify credentials
-      const account = verifyLogin(email, password);
+      // Call backend API for login
+      const data = await api.login(email, password);
       
-      if (account) {
+      if (data && data.token) {
         // Save to localStorage
-        localStorage.setItem("token", `token_${account.id}`);
-        localStorage.setItem("email", account.email);
-        localStorage.setItem("role", account.role);
-        localStorage.setItem("name", account.name);
-        localStorage.setItem("grade", account.grade);
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("email", email);
+        localStorage.setItem("role", data.user?.role || "ADMIN");
+        localStorage.setItem("name", data.user?.name || "User");
 
         // Route by role
         const roleRoutes = {
@@ -39,12 +33,13 @@ export default function Login() {
           "SPORTS_COORDINATOR": "/sports-dashboard"
         };
         
-        navigate(roleRoutes[account.role] || "/admin-dashboard");
+        navigate(roleRoutes[data.user?.role] || "/admin-dashboard");
       } else {
-        setError("❌ Invalid email or password");
+        setError("❌ Invalid credentials");
       }
     } catch (err) {
-      setError("❌ Login failed. Try again.");
+      console.error("Login error:", err);
+      setError("❌ Login failed. Check credentials and try again.");
     } finally {
       setLoading(false);
     }
@@ -177,7 +172,7 @@ export default function Login() {
           <p style={{ margin: "0 0 10px 0", fontWeight: "600", color: "#374151" }}>📝 Test Accounts:</p>
           {[
             { role: "👑 Admin", email: "admin@school.com" },
-            { role: "👨‍🏫 Teacher", email: "teacher@gmail.com" },
+            { role: "👨‍🏫 Teacher", email: "teacher@school.com" },
             { role: "💰 Finance", email: "finance@school.com" },
             { role: "⚽ Sports", email: "sports@school.com" }
           ].map((demo, i) => (
@@ -186,11 +181,6 @@ export default function Login() {
             </p>
           ))}
           <p style={{ margin: "8px 0 0 0", color: "#9ca3af" }}>Password: <strong>Admin@123</strong></p>
-          
-          <hr style={{ margin: "15px 0", border: "none", borderTop: "1px solid #e5e7eb" }} />
-          
-          <p style={{ margin: "0 0 8px 0", fontWeight: "600", color: "#374151" }}>✅ Create New Accounts:</p>
-          <p style={{ margin: "5px 0", color: "#6b7280", fontSize: "11px" }}>Login as Admin, go to <strong>User Accounts</strong> panel and create new accounts. They will work immediately!</p>
         </div>
       </div>
     </div>
