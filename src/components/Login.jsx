@@ -14,12 +14,15 @@ function Login() {
     setLoading(true);
 
     try {
+      console.log('Attempting login with:', email);
       const result = await login(email, password);
+      console.log('Login result:', result);
+      
       if (!result.success) {
         setError(result.error || 'Login failed');
       }
     } catch (err) {
-      console.error('Login error:', err);
+      console.error('Login error in component:', err);
       setError(err.message || 'An unexpected error occurred');
     } finally {
       setLoading(false);
