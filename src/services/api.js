@@ -1,4 +1,4 @@
-// API Service
+﻿// API Service
 const API_URL = import.meta.env.VITE_API_URL || 'https://admin-system-backend-1.onrender.com';
 
 const getAuthToken = () => {
@@ -19,7 +19,6 @@ export const login = async (email, password) => {
     console.log('=== LOGIN ATTEMPT ===');
     console.log('API_URL:', API_URL);
     console.log('Email:', email);
-    console.log('Password:', password);
     
     const response = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
@@ -35,7 +34,6 @@ export const login = async (email, password) => {
 
     console.log('Response status:', response.status);
     
-    // Get the raw text response first
     const text = await response.text();
     console.log('Raw response:', text);
 
@@ -43,7 +41,6 @@ export const login = async (email, password) => {
       throw new Error(`Login failed: ${response.status} - ${text}`);
     }
 
-    // Parse the response
     let data;
     try {
       data = JSON.parse(text);
@@ -55,7 +52,6 @@ export const login = async (email, password) => {
     console.log('Parsed data:', data);
 
     if (data.success && data.token) {
-      // Store token and user data
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify({
         email: data.email,
@@ -64,8 +60,6 @@ export const login = async (email, password) => {
       }));
       
       console.log('✅ Login successful!');
-      console.log('User:', data.email, 'Role:', data.role);
-      
       return data;
     } else {
       const errorMsg = data.error || data.message || 'Invalid response format';
@@ -92,7 +86,7 @@ export const getUsers = async () => {
   try {
     const token = getAuthToken();
     if (!token) {
-      console.warn('No token found, user may not be logged in');
+      console.warn('No token found');
       return [];
     }
     
@@ -101,7 +95,6 @@ export const getUsers = async () => {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
       },
     });
     
@@ -113,7 +106,6 @@ export const getUsers = async () => {
   }
 };
 
-// Export other functions as needed...
 export const getStudents = async () => {
   try {
     const users = await getUsers();

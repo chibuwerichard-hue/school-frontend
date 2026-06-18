@@ -1,78 +1,90 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { login as apiLogin } from '../services/api';
+import api from '../services/api';
 
 const AuthContext = createContext();
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (token) {
-      const userData = localStorage.getItem('user');
-      if (userData) {
-        try {
-          setUser(JSON.parse(userData));
-        } catch (e) {
-          console.error('Error parsing user data:', e);
-        }
+    // Check if user is already logged in
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    console.log('AuthProvider init - token:', token);
+    console.log('AuthProvider init - userData:', userData);
+    
+    if (token && userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+        console.log('User restored from localStorage:', parsedUser);
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
       }
     }
-  }, [token]);
+    setLoading(false);
+  }, []);
 
   const login = async (email, password) => {
+    console.log('Login function called with:', email);
     setLoading(true);
     setError(null);
+    
     try {
-      console.log('Attempting login with:', email);
-      const data = await apiLogin(email, password);
-      console.log('Login response data:', data);
+      const data = await api.login(email, password);
+      console.log('Login API response:', data);
       
-      if (data && data.success) {
-        setToken(data.token);
-        const userData = {
+      if (data.success) {
+        const userInfo = {
           email: data.email,
           role: data.role,
           id: data.id
         };
-        setUser(userData);
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(userData));
-        return { success: true, data };
+        setUser(userInfo);
+        console.log('User set in state:', userInfo);
+        return { success: true };
       } else {
-        const errorMsg = data?.error || data?.message || 'Login failed';
+        const errorMsg = data.error || 'Login failed';
         setError(errorMsg);
         return { success: false, error: errorMsg };
       }
     } catch (error) {
-      console.error('Login error in context:', error);
-      const errorMsg = error.message || 'An unexpected error occurred';
-      setError(errorMsg);
-      return { success: false, error: errorMsg };
+      console.error('Login error in AuthContext:', error);
+      setError(error.message);
+      return { success: false, error: error.message };
     } finally {
       setLoading(false);
     }
   };
 
   const logout = () => {
-    setToken(null);
+    api.logout();
     setUser(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    console.log('User logged out');
   };
 
   const value = {
     user,
-    token,
     loading,
     error,
     login,
-    logout,
+    logout
   };
+
+  console.log('AuthContext value:', value);
 
   return (
     <AuthContext.Provider value={value}>
